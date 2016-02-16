@@ -13,20 +13,20 @@ endif
 
 .PHONY: ${TARGETS} ${SUBDIRS}
 
-all::	show-licenses
+all::	show-leases
 
 ${TARGETS}::
 
 clobber distclean:: clean
 
-check::	show-licenses
-	./show-licenses ${ARGS}
+check::	show-leases
+	./show-leases ${ARGS}
 
-install:: show-licenses
-	${INSTALL} -D show-licenses ${BINDIR}/show-licenses
+install:: show-leases
+	${INSTALL} -D show-leases ${BINDIR}/show-leases
 
 uninstall::
-	${RM} ${BINDIR}/show-licenses
+	${RM} ${BINDIR}/show-leases
 
 ifneq	(,${SUBDIRS})
 ${TARGETS}::
