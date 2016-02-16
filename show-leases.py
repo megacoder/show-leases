@@ -1,0 +1,119 @@
+#!/usr/bin/python
+# vim: noet sw=4 ts=4
+
+import	sys
+import	os
+
+class	DhcpLeaseReader( object ):
+
+	def	__init__( self ):
+		# Indexed by IP address aka lease name
+		self.leases = dict()
+		return
+
+	def	do_name( self, name ):
+		if os.path.isdir( name ):
+			# print '{0} is a directory.'.format( name )
+			try:
+				with entry in sorted( os.listdir( name ) ):
+					self.do_name(
+						os.path.join(
+							name,
+							entry
+						)
+					)
+			except Exception, e:
+				print >>sys.stderr, 'Cannot open "%s" for reading.' % name
+				raise e
+		elif os.path.isfile( name ):
+			# print '{0} is a file.'.format( name )
+			try:
+				with open( name ) as f:
+					self.do_file( f )
+			except Exception, e:
+				print >>sys.stderr, 'Error reading "%s".' % name
+				raise e
+		return
+
+	def	do_file( self, f = sys.stdin ):
+		addr  = None
+		attrs = None
+		for line in f:
+			# print 'attrs = {0}'.format( attrs )
+			# print '> {0}'.format( line )
+			tokens = line.split( '#', 1 )[0].split()
+			# print 'Tokens = {0}'.format( '|'.join( tokens ) )
+			if len( tokens ) >= 1:
+				# if tokens[0] is 'lease' and tokens[2] is '{':
+				# print 'Verb = |{0}|'.format( tokens[0] )
+				if tokens[0] == 'lease':
+					# print 'NEW'
+					addr  = tokens[ 1 ]
+					attrs = dict()
+					# print >>sys.stderr, 'Lease {0}'.format( addr )
+				elif tokens[-1].endswith( ';' ):
+					# print 'attrs = {0}'.format( attrs )
+					attrs[ tokens[0] ] = tokens[1:]
+				elif tokens[0] == '}':
+					self.leases[addr] = attrs
+					# print 'LEASES = {0}'.format( self.leases )
+				else:
+					# Huh?
+					pass
+		return
+
+	def	_tcpip( self, addr ):
+		ints = map(
+			int,
+			addr.split( '.', 3 )
+		)
+		tcpip = 0
+		for i in range( len( addr ) ):
+			tcpip *= 8
+			tcpip += addr[i]
+		return tcpip
+
+	def	report( self, out = sys.stdout ):
+		# print 'leases = {0}'.format( self.leases )
+		others = False
+		widths = dict()
+		ordered_leases = [
+			tcpip for tcpip in sorted(
+				self.leases.keys(),
+				key = lambda d: map(
+					int,
+					d.split( '.', 3 )
+				)
+			)
+		]
+		for addr in ordered_leases:
+			if others:
+				print
+			others = True
+			print 'lease %s\t{' % addr
+			attrs = self.leases[ addr ]
+			ordered_attrs  = [ attr for attr in sorted( attrs ) ]
+			for attr in ordered_attrs:
+				print '    {0:<10}  {1}'.format(
+					attr,
+					' '.join( attrs[attr] )
+				)
+			print '}'
+		return
+
+if __name__ == '__main__':
+	opts = dict()
+	args = sys.argv[1:]
+	dlr = DhcpLeaseReader()
+	if len(args) == 0:
+		dlr.do_file()
+	else:
+		for arg in args:
+			try:
+				# print 'Data file: {0}'.format( arg )
+				dlr.do_name( arg )
+			except Exception, e:
+				print >>sys.stderr, 'File "{0}" has errors.'.format( arg )
+				raise e
+	dlr.report()
+	exit( 0 )
