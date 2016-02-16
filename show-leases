@@ -12,7 +12,9 @@ class	DhcpLeaseReader( object ):
 		return
 
 	def	do_name( self, name ):
-		if os.path.isdir( name ):
+		if not os.path.exists( name ):
+			print >>sys.stderr, 'No such file: {0}'.format( name )
+		elif os.path.isdir( name ):
 			# print '{0} is a directory.'.format( name )
 			try:
 				with entry in sorted( os.listdir( name ) ):
@@ -102,13 +104,29 @@ class	DhcpLeaseReader( object ):
 		return
 
 if __name__ == '__main__':
-	opts = dict()
-	args = sys.argv[1:]
+	import	argparse
+	p = argparse.ArgumentParser(description='Show current DHCP leases.')
+	p.add_argument(
+		'-c',
+		'--current',
+		dest    = 'current',
+		action  = 'store_true',
+		help    = 'display current leases file.'
+	)
+	p.add_argument(
+		'files',
+		nargs = '*',
+		help = 'optional lease filenames.'
+	)
+	args = p.parse_args()
 	dlr = DhcpLeaseReader()
-	if len(args) == 0:
+	if args.current:
+		fn = '/var/lib/dhcpd/dhcpd.leases'
+		dlr.do_name( fn )
+	elif len(args.files) == 0:
 		dlr.do_file()
 	else:
-		for arg in args:
+		for arg in args.files:
 			try:
 				# print 'Data file: {0}'.format( arg )
 				dlr.do_name( arg )
