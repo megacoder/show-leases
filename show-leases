@@ -90,11 +90,11 @@ class	DhcpLeaseReader( object ):
 			if others:
 				print
 			others = True
-			print 'lease %s\t{' % addr
+			print 'lease %s {' % addr
 			attrs = self.leases[ addr ]
 			ordered_attrs  = [ attr for attr in sorted( attrs ) ]
 			for attr in ordered_attrs:
-				print '    {0:<10}  {1}'.format(
+				print '{0:>17}  {1}'.format(
 					attr,
 					' '.join( attrs[attr] )
 				)
